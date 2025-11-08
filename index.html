@@ -131,35 +131,6 @@
             });
         });
     </script>
-
-<script src="recursos/js/cart.js"></script>
-<script src="recursos/js/save-order.js"></script>
-<div id="cartFloating" style="position:fixed;right:18px;bottom:18px;z-index:9999">
-  <button id="openCart" style="width:56px;height:56px;border-radius:50%;border:none;box-shadow:0 6px 18px rgba(0,0,0,0.12);font-size:18px">🛒</button>
-</div>
-<div id="cartModal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.4);align-items:center;justify-content:center">
-  <div style="background:#fff;padding:16px;border-radius:8px;min-width:320px;max-width:700px">
-    <h3>Carrito</h3>
-    <div id="cartArea"></div>
-    <div><strong>Total: $<span id="cartTotal">0</span></strong></div>
-    <button id="checkoutBtn">Enviar por WhatsApp</button>
-    <button id="closeCart">Cerrar</button>
-  </div>
-</div>
-<script>
-var FIREBASE_CONFIG = null;
-if(FIREBASE_CONFIG !== null) firebase.initializeApp(FIREBASE_CONFIG);
-const WA_PHONE = '56954356331';
-function renderCartArea(){ const area = document.getElementById('cartArea'); area.innerHTML=''; const items = window.__ShopCart ? window.__ShopCart.listItems() : []; if(items.length===0) area.innerHTML='<em>Carrito vacío</em>'; items.forEach(it=>{ const div = document.createElement('div'); div.innerHTML = `<div style="display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid #eee"><div><strong>${it.name}</strong><div>talla: ${it.size||''}</div><div>cantidad: ${it.qty}</div></div><div>$${it.price*it.qty} <button data-key="${it.key}" class="rem">Quitar</button></div></div>`; area.appendChild(div); }); document.getElementById('cartTotal').textContent = window.__ShopCart ? window.__ShopCart.total() : 0; document.querySelectorAll('.rem').forEach(b=>b.addEventListener('click', (e)=>{ window.__ShopCart.removeItem(e.currentTarget.getAttribute('data-key')); renderCartArea(); })); }
-document.getElementById('openCart').addEventListener('click', ()=>{ document.getElementById('cartModal').style.display='flex'; renderCartArea(); });
-document.getElementById('closeCart').addEventListener('click', ()=>{ document.getElementById('cartModal').style.display='none'; });
-document.getElementById('checkoutBtn').addEventListener('click', ()=>{
-  const name = prompt('Nombre y apellido (sin RUT)'); if(!name) return alert('Ingrese un nombre'); const parts = name.trim().split(' '); const firstname = parts.shift(); const lastname = parts.join(' '); const items = window.__ShopCart.listItems(); const total = window.__ShopCart.total(); const code = (Math.random().toString(36).substr(2,9) + Date.now().toString(36)).substr(0,12); const order = { name: firstname + ' ' + lastname, items, total, code, date: new Date().toISOString(), status: 'pendiente' };
-  saveOrderToFirestore(order).then(id=>{ if(id) order.id = id; let msg = `Nombre: ${order.name}\n--- Productos ---\n`; order.items.forEach((it,i)=> msg += `${i+1}. ${it.name}. precio: $${it.price} tallas pedidas: ${it.size}. Cantidad: ${it.qty}\n`); msg += `\nTotal: $${order.total}\n\nCódigo de pedido: ${order.code}`; const url = 'https://wa.me/' + WA_PHONE + '?text=' + encodeURIComponent(msg); window.open(url,'_blank'); window.__ShopCart.clearCart(); renderCartArea(); alert('Pedido enviado. Código: ' + order.code); }).catch(e=>{ console.error(e); alert('Error guardando pedido: '+e.message); });
-});
-window.addEventListener('cart.updated', ()=> renderCartArea());
-</script>
-
 </body>
 
 </html>
